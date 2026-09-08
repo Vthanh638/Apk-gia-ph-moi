@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Gia phả Họ Lăng apk 1",
+  "description": "Ứng dụng quản lý gia phả dòng họ Lăng - Gìn giữ cội nguồn tâm linh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

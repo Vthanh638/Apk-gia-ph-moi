@@ -1,0 +1,140 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Family Member",
+      "description": "A member of the family tree",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "gender": { "type": "string", "enum": ["male", "female"] },
+        "role": { "type": "string", "enum": ["blood", "in-law"] },
+        "birthOrder": { "type": "number" },
+        "solarBirthDate": { "type": "string" },
+        "lunarBirthDate": { "type": "string" },
+        "birthTime": { "type": "string" },
+        "solarDeathDate": { "type": "string" },
+        "lunarDeathDate": { "type": "string" },
+        "deathTime": { "type": "string" },
+        "bio": { "type": "string" },
+        "address": { "type": "string" },
+        "spouse": { "type": "string" },
+        "spouseId": { "type": "string" },
+        "nickname": { "type": "string" },
+        "parentId": { "type": "string" },
+        "burialPlace": { "type": "string" },
+        "avatar": { "type": "string" },
+        "generation": { "type": "number" }
+      },
+      "required": ["id", "name", "code", "gender", "role", "generation"]
+    },
+    "User": {
+      "title": "App User",
+      "description": "A user of the application",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "viewer"] },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "requestedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "status"]
+    },
+    "Settings": {
+      "title": "App Settings",
+      "description": "General application settings like contact info and auth codes",
+      "type": "object",
+      "properties": {
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "adminPassword": { "type": "string" },
+        "guestPassword": { "type": "string" }
+      }
+    },
+    "Feedback": {
+      "title": "User Feedback",
+      "description": "Messages sent by users via the contact form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone", "message", "timestamp"]
+    },
+    "TrashedMember": {
+      "title": "Trashed Family Member",
+      "description": "A family member soft-deleted into trash",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "gender": { "type": "string", "enum": ["male", "female"] },
+        "role": { "type": "string", "enum": ["blood", "in-law"] },
+        "birthOrder": { "type": "number" },
+        "solarBirthDate": { "type": "string" },
+        "lunarBirthDate": { "type": "string" },
+        "birthTime": { "type": "string" },
+        "solarDeathDate": { "type": "string" },
+        "lunarDeathDate": { "type": "string" },
+        "deathTime": { "type": "string" },
+        "bio": { "type": "string" },
+        "address": { "type": "string" },
+        "spouse": { "type": "string" },
+        "spouseId": { "type": "string" },
+        "nickname": { "type": "string" },
+        "parentId": { "type": "string" },
+        "burialPlace": { "type": "string" },
+        "avatar": { "type": "string" },
+        "generation": { "type": "number" },
+        "deletedAt": { "type": "string", "format": "date-time" },
+        "deletedBy": { "type": "string" }
+      },
+      "required": ["id", "name", "code", "gender", "role", "generation", "deletedAt", "deletedBy"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "An announcement posted by admin to all members",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["title", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "members": {
+      "schema": "Member",
+      "description": "Collection of family members"
+    },
+    "users": {
+      "schema": "User",
+      "description": "Collection of users and their access status"
+    },
+    "settings": {
+      "schema": "Settings",
+      "description": "Dynamic app configuration"
+    },
+    "feedback": {
+      "schema": "Feedback",
+      "description": "Collection of user feedback messages"
+    },
+    "trash": {
+      "schema": "TrashedMember",
+      "description": "Collection of soft-deleted family members"
+    },
+    "notifications": {
+      "schema": "Notification",
+      "description": "Collection of admin announcements/notifications"
+    }
+  }
+}

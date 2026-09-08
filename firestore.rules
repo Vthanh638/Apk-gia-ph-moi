@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- REUSABLE HELPER FUNCTIONS ---
+    
+    // Checks if the user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Validates basic ID strings for security boundaries
+    function isValidId(id) {
+      return id.size() > 0 && id.size() <= 128;
+    }
+
+    // Incoming resource data helper
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Custom Token Claim Admin Check (Zero-trust secure claim verification)
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.uid == 'fY07tNvHAbdgNHFHFOYjzGoPEOf2' || 
+        (request.auth.token != null && request.auth.token.email == 'adminthanhquanly76@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'hdung0394@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'Hdung0394@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'Adminthanhquanly76@gmail.com') ||
+        (request.auth.token != null && request.auth.token.get('email', '') == 'adminthanhquanly76@gmail.com') ||
+        (request.auth.token != null && request.auth.token.get('email', '') == 'hdung0394@gmail.com') ||
+        (request.auth.token != null && request.auth.token.get('email', '') == 'Hdung0394@gmail.com') ||
+        (request.auth.token != null && request.auth.token.get('email', '') == 'Adminthanhquanly76@gmail.com') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
+      );
+    }
+
+    // Checks if user status is approved in the database
+    function isApprovedUser() {
+      return isSignedIn() && (
+        (request.auth.token != null && request.auth.token.email == 'adminthanhquanly76@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'hdung0394@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'Hdung0394@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'Adminthanhquanly76@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'nguoixem@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'Nguoixem@gmail.com') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', '') == 'approved')
+      );
+    }
+
+    // Custom Token Claim Viewer Check
+    function isViewer() {
+      return isViewerUser() || isAdmin() || isApprovedUser();
+    }
+
+    // Custom Token Claim Viewer User Check
+    function isViewerUser() {
+      return isSignedIn() && (
+        request.auth.uid == 'Ivl5EFifeyWUi1LWBOZZjNzSD3J3' || 
+        (request.auth.token != null && request.auth.token.email == 'nguoixem@gmail.com') ||
+        (request.auth.token != null && request.auth.token.email == 'Nguoixem@gmail.com') ||
+        (request.auth.token != null && request.auth.token.get('email', '') == 'nguoixem@gmail.com') ||
+        (request.auth.token != null && request.auth.token.get('email', '') == 'Nguoixem@gmail.com') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'viewer')
+      );
+    }
+
+
+    // --- 1. CONNECTION TEST ---
+    match /test/connection {
+      allow read: if true;
+    }
+
+
+    // --- 2. USERS COLLECTION ---
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+
+    // --- 3. GENEALOGY MEMBERS COLLECTION ---
+    match /members/{memberId} {
+      allow get: if isValidId(memberId) && isViewer();
+      allow list: if isViewer();
+      
+      allow create, update, delete: if isAdmin();
+    }
+
+
+    // --- 4. CONTACT & ACCESS LOGS (Any user can write/submit, only Admin can view/delete) ---
+    match /feedback/{feedbackId} {
+      function isValidFeedback(data) {
+        return data.keys().hasAll(['name', 'phone', 'message', 'timestamp']) &&
+               data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+               data.phone is string && data.phone.matches('^0[0-9]{9}$') &&
+               data.message is string && data.message.size() > 0 && data.message.size() <= 5000 &&
+               data.timestamp is string;
+      }
+      
+      allow create: if isValidFeedback(incoming());
+      allow read, delete: if isAdmin();
+    }
+
+    match /logs/{logId} {
+      allow create: if true;
+      allow read, delete: if isAdmin();
+    }
+
+    match /access_logs/{logId} {
+      allow create: if true;
+      allow read, delete: if isAdmin();
+    }
+
+
+    // --- 5. SETTINGS & APP CONFIG (Zero-Hardcode Zero-Trust) ---
+    match /settings/{settingId} {
+      function isValidSetting(data) {
+        return data.keys().size() <= 20;
+      }
+
+      // ONLY public contact settings and sessionConfig can be read publicly. Other settings are NOT readable.
+      allow get: if settingId == 'contact' || settingId == 'sessionConfig';
+      allow read: if false;
+      allow list: if false;
+      
+      allow write: if isValidId(settingId) && isAdmin() && isValidSetting(incoming());
+    }
+
+    // --- 6. TRASH COLLECTION ---
+    match /trash/{trashId} {
+      allow read, write: if isAdmin();
+    }
+
+    // --- 7. NOTIFICATIONS COLLECTION ---
+    match /notifications/{notificationId} {
+      allow get: if isViewer();
+      allow list: if isViewer();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --- 8. ACCESS REQUESTS COLLECTION ---
+    match /access_requests/{requestId} {
+      allow create: if isViewer() &&
+                    incoming().sessionId is string &&
+                    incoming().status == 'pending' &&
+                    incoming().requestedAt is string &&
+                    incoming().memberId is string &&
+                    incoming().memberName is string &&
+                    incoming().requesterName is string;
+      allow read: if isViewer() || isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isViewer() || isAdmin();
+    }
+  }
+}
